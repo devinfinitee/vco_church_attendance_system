@@ -1,0 +1,260 @@
+
+
+# **🎨 UI DESIGN —  VCO  (Victory chapel ogbomosho)- CHURCH ATTENDANCE SYSTEM** 
+
+ 
+
+# **1. Attendee Form Page (Public Page)**
+
+### **Overall Style**
+
+* Clean, minimal, calming
+* White background (#FFFFFF)
+* Primary color: Deep blue (#1E3A8A)
+* Accent color: Gold (#FBBF24)
+* Rounded edges (border-radius: 14–20px)
+* Large spacing (padding 24–32px)
+* Mobile-first layout
+
+---
+
+## **Top Section**
+
+**Logo + Church Name**
+
+* Simple centered logo (can be a cross or church icon)
+* Text: *"Welcome to Sunday Service Attendance"*
+* Font size: 24px bold
+* Color: #1E3A8A
+* Small subtitle beneath: *"Please fill the form to register your presence"* (16px)
+
+---
+
+## **Form Card**
+
+A centered card with white background and soft shadow.
+
+### **Card Style**
+
+* Width: 100% on mobile, 480px max on desktop
+* Padding: 20–28px
+* Border-radius: 16px
+* Box-shadow: subtle `0 4px 12px rgba(0,0,0,0.08)`
+
+### **Form Fields**
+
+All fields use:
+
+* Rounded input boxes
+* Light gray border (#E5E7EB)
+* Padding: 14–16px
+* Font: 16px
+
+**Fields:**
+
+1. **Full Name (Required)**
+   Input placeholder: “Enter full name”
+
+2. **Phone Number (Required)**
+   Placeholder: “e.g. 0803 123 4567” 
+
+4. **Are you a first-time visitor? (Required)**
+   Two buttons (toggle style):
+
+   * “Yes”
+   * “No”
+     Selected button turns deep blue with white text.
+5 date of birth make it a text input field
+6 address  
+
+
+
+
+6. **Department -- since it is a student church so - a text input field 
+ 8 Level - to know which level the person belongs to 100 - 600L dropdown but 600L shouldnt be available to those who arent in medicine and surgery dept  
+
+7. **Date Auto-filled**
+
+   * Non-editable
+   * Gray text
+   * “Today’s Date: October 24, 2025”
+
+---
+
+## **Submit Button**
+
+* Full-width
+* Height: 50–55px
+* Background: #1E3A8A
+* Text: “Submit Attendance” (white, bold)
+* Hover: darker blue
+* Rounded: 14px
+
+---
+
+## **Success Message Screen**
+
+After submitting:
+
+**Large checkmark icon**
+Text:
+
+* “Thank you for attending service!”
+* “Your presence has been recorded.”
+
+Button below:
+
+* “Go back home” or auto-close after 3 seconds.
+
+---
+
+---
+
+# **2. Admin Login Page**
+
+### **Style**
+
+Minimal, professional.
+
+**Centered login card** with:
+
+* White background
+* Blue border-left accent (6px)
+* Padding: 32px
+* Rounded: 16px
+
+### **Fields**
+
+* Email / Username
+* Password
+* “Remember me” checkbox
+
+### **Button**
+
+* “Login to Dashboard”
+* Deep Blue (#1E3A8A), white text
+* Width: 100%
+
+### **Footer**
+
+Small text:
+“Church Attendance Management System v1.0”
+
+---
+
+---
+
+# **3. Admin Analytics Dashboard Page**
+
+Layout follows a modern SaaS style:
+
+---
+
+## **Top Navigation Bar**
+
+* Background: White
+* Height: 60px
+* Left: Church logo + “Admin Dashboard”
+* Right: Admin profile circle + Logout button
+
+---
+
+## **Dashboard Overview Section**
+
+A grid of 3–4 **analytics cards**.
+
+### **Card Style**
+
+* White card
+* Rounded corners (16px)
+* Padding: 20px
+* Shadow: `0 2px 10px rgba(0,0,0,0.06)`
+
+### **Cards**
+
+1. **Total Attendance Today**
+   Bold number (40px)
+   Subtext: “For Sunday, Oct 24”
+
+2. **New Visitors Today**
+   Highlight in gold
+
+3. **Returning Members**
+
+4. **Absent Members (from last week)**
+   Display count
+
+---
+
+## **Attendance Graph Section**
+
+A large chart (line or bar) titled:
+
+**“Weekly Attendance Trend (Last 6 Sundays)”**
+
+Style:
+
+* White background card
+* 100% width
+* Rounded
+* Padding: 24px
+
+---
+
+## **Attendance List Table**
+
+### Table Columns:
+
+* Name
+* Phone
+* Visitor?
+* Department
+* Time logged
+* Status (New/Returning)
+
+### Table Style:
+
+* Alternating row background (#F9FAFB)
+* Sticky header
+* Search bar above:
+
+  * “Search by name or phone”
+
+---
+
+## **Consistency Tracking Section**
+
+Title: **“Member Attendance Insights”**
+
+Three small cards:
+
+1. **Consistent Members**
+2. **Absent for 2 Weeks**
+3. **Absent for 4+ Weeks** (highlight in red)
+
+---
+
+## **Filters**
+
+Horizontal filter bar:
+
+* “Select Date”
+* “Select Range” (This Week, Last Week, Last Month)
+* “Export CSV” button
+
+Button style:
+
+* Outline gold border (#FBBF24)
+* Text: #1E3A8A
+
+---
+
+# **Done.
+
+This is a full UI specification.**
+
+the inspo design is being uploaded and the church logo likewise
+
+the site should be very responsive for mobile devices and there should be animation effect
+
+
