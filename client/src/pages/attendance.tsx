@@ -81,7 +81,7 @@ export default function Attendance() {
       };
 
       // Submit to backend API
-      const response = await fetch("http://localhost:5001/api/submit", {
+      const response = await fetch("https://vcoattendance.onrender.com/api/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -80,7 +80,7 @@ export default function Dashboard() {
     const fetchAttendance = async () => {
       try {
         const token = localStorage.getItem("vco_token");
-        const response = await fetch("http://localhost:5001/api/admin", {
+        const response = await fetch("https://vcoattendance.onrender.com/api/admin", {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (response.status === 401) {
@@ -214,7 +214,7 @@ export default function Dashboard() {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/export-csv?date=${selectedDate}`, {
+      const response = await fetch(`https://vcoattendance.onrender.com/api/admin/export-csv?date=${selectedDate}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!response.ok) {
