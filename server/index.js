@@ -10,7 +10,6 @@ const Admin = require("./model/Admin");
 const bcrypt = require("bcryptjs");
 const cookieParser = require("cookie-parser");
 
-
 // Initialize express app
 const app = express();
 
@@ -20,11 +19,18 @@ const PORT = process.env.PORT || 5001;
 // MIDDLEWARE CONFIGURATION
 
 // Enable CORS (Cross-Origin Resource Sharing) to allow frontend to communicate with backend
-app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5000"], // Allow both Vite ports
-  credentials: true, // Allow cookies and authentication headers,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5000",
+      "https://vcoattendance.vercel.app",
+      "https://vcoattendance.onrender.com",
+    ], // Allow both Vite ports
+    credentials: true, // Allow cookies and authentication headers,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
 
 // Parse JSON request bodies
 app.use(express.json());
@@ -48,7 +54,9 @@ mongoose
           const emailEnv = process.env.ADMIN_EMAIL;
           const passwordEnv = process.env.ADMIN_PASSWORD;
           if (!emailEnv || !passwordEnv) {
-            console.warn("⚠️ No admin seeded. Set ADMIN_EMAIL and ADMIN_PASSWORD in .env to create an initial admin.");
+            console.warn(
+              "⚠️ No admin seeded. Set ADMIN_EMAIL and ADMIN_PASSWORD in .env to create an initial admin."
+            );
           } else {
             const email = emailEnv.toLowerCase();
             const hash = await bcrypt.hash(passwordEnv, 10);
