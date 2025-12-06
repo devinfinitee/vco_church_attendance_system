@@ -12,7 +12,8 @@ import {
   Download,
   Check,
   AlertCircle,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -150,24 +151,47 @@ export default function Dashboard() {
   const presentToday = new Set(attendeesToday.map((a: any) => String(a._id)));
   computedAttendanceStats.absent = Array.from(presentLastWeek).filter(id => !presentToday.has(id)).length;
 
-  // Weekly trend (last 6 Sundays)
+  // Weekly trend (last 6 Sundays with real data)
   const getLastNSundays = (n: number) => {
-    const list: string[] = [];
+    const list: { date: string; dayOfWeek: number }[] = [];
     let anchor = new Date();
-    // Move to the most recent Sunday (including today if Sunday)
-    anchor.setDate(anchor.getDate() - anchor.getDay());
+    
+    // Move to the most recent Sunday (or today if it's Sunday)
+    const currentDay = anchor.getDay();
+    if (currentDay !== 0) {
+      anchor.setDate(anchor.getDate() - currentDay);
+    }
+    
+    // Get last N Sundays
     for (let i = 0; i < n; i++) {
       const d = new Date(anchor);
       d.setDate(anchor.getDate() - i * 7);
-      list.push(toISODate(d));
+      list.push({ date: toISODate(d), dayOfWeek: d.getDay() });
     }
     return list.reverse();
   };
+  
   const sundays = getLastNSundays(6);
-  const computedWeeklyTrend = sundays.map(dateISO => ({
-    name: new Date(dateISO).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-    attendance: (attendanceData || []).filter((a: any) => (a.datesofattendance || []).some((d: string) => toISODate(d) === dateISO)).length,
-  }));
+  const computedWeeklyTrend = sundays.map(({ date: dateISO }) => {
+    // Count unique attendees who attended on this specific Sunday
+    const attendeesOnDate = (attendanceData || []).filter((a: any) => 
+      (a.datesofattendance || []).some((d: string) => toISODate(d) === dateISO)
+    );
+    
+    const dateObj = new Date(dateISO);
+    const formattedDate = dateObj.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: dateObj.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined 
+    });
+    
+    return {
+      name: formattedDate,
+      fullDate: dateISO,
+      attendance: attendeesOnDate.length,
+      isSunday: true
+    };
+  });
 
   // Consistency / absentee insights
   const now = new Date();
@@ -252,6 +276,34 @@ export default function Dashboard() {
       URL.revokeObjectURL(url);
     } catch (e) {
       alert("Failed to export CSV: " + (e as Error).message);
+    }
+  };
+
+  const handleDeleteAttendee = async (attendeeId: string, attendeeName: string) => {
+    if (!confirm(`Are you sure you want to delete ${attendeeName}? This cannot be undone.`)) {
+      return;
+    }
+    
+    const token = localStorage.getItem("vco_token");
+    if (!token) {
+      alert("Please login to delete records");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`https://vcoattendance.onrender.com/api/admin/attendee/${attendeeId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete attendee");
+      }
+      
+      alert(`${attendeeName} has been deleted successfully`);
+      await fetchAttendance(); // Refresh the data
+    } catch (e) {
+      alert("Failed to delete attendee: " + (e as Error).message);
     }
   };
 
@@ -528,6 +580,7 @@ export default function Dashboard() {
                           <TableHead>Role/Dept</TableHead>
                           <TableHead>Time Logged</TableHead>
                           <TableHead className="text-right">Status</TableHead>
+                          <TableHead className="text-center">Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -545,11 +598,20 @@ export default function Dashboard() {
                                    <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Returning</Badge>
                                  )}
                               </TableCell>
+                              <TableCell className="text-center">
+                                <button
+                                  onClick={() => handleDeleteAttendee(attendee.id, attendee.name)}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
+                                  title="Delete attendee"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                               {searchTerm ? `No results found for "${searchTerm}"` : "No attendance records found for this date."}
                             </TableCell>
                           </TableRow>

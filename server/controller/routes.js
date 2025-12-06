@@ -8,8 +8,8 @@ const Attendee = require("../model/Attendee");
 const jwt = require("jsonwebtoken");
 
 // Hardcoded admin credentials
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@church.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "vco123";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 // POST /submit - Submit attendance record (create or update existing)
 Router.post("/submit", async (req, res) => {
@@ -276,6 +276,44 @@ Router.get("/admin/export-csv", authMiddleware, async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Failed to export CSV" });
+  }
+});
+
+// DELETE /admin/attendee/:attendeeId - Delete an attendee record
+Router.delete("/admin/attendee/:attendeeId", authMiddleware, async (req, res) => {
+  try {
+    const { attendeeId } = req.params;
+
+    // Validate ObjectId format
+    if (!attendeeId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid attendee ID format",
+      });
+    }
+
+    // Delete the attendee
+    const deletedAttendee = await Attendee.findByIdAndDelete(attendeeId);
+
+    if (!deletedAttendee) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendee not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: `${deletedAttendee.name} has been deleted successfully`,
+      data: deletedAttendee,
+    });
+  } catch (error) {
+    console.error("Delete attendee error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete attendee",
+      error: error.message,
+    });
   }
 });
 
