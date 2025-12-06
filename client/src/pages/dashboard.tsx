@@ -71,6 +71,33 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch attendance data function (can be called multiple times)
+  const fetchAttendance = async () => {
+    try {
+      const token = localStorage.getItem("vco_token");
+      const response = await fetch("https://vcoattendance.onrender.com/api/admin", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (response.status === 401) {
+        setLocation("/login");
+        return;
+      }
+      const result = await response.json();
+      
+      if (result.success) {
+        setAttendanceData(result.data);
+      } else {
+        console.error("Failed to fetch attendance:", result.message);
+        setError(result.message || "Failed to fetch attendance");
+      }
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+      setError("Network error while fetching attendance");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Redirect immediately if no token, then fetch
   useEffect(() => {
     const token = localStorage.getItem("vco_token");
@@ -78,32 +105,6 @@ export default function Dashboard() {
       setLocation("/login");
       return;
     }
-    const fetchAttendance = async () => {
-      try {
-        const token = localStorage.getItem("vco_token");
-        const response = await fetch("https://vcoattendance.onrender.com/api/admin", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (response.status === 401) {
-          setLocation("/login");
-          return;
-        }
-        const result = await response.json();
-        
-        if (result.success) {
-          setAttendanceData(result.data);
-        } else {
-          console.error("Failed to fetch attendance:", result.message);
-          setError(result.message || "Failed to fetch attendance");
-        }
-      } catch (error) {
-        console.error("Error fetching attendance:", error);
-        setError("Network error while fetching attendance");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAttendance();
   }, []);
 
@@ -585,7 +586,10 @@ export default function Dashboard() {
                       </TableHeader>
                       <TableBody>
                         {paginatedAttendance.length > 0 ? (
-                          paginatedAttendance.map((attendee, index) => (
+                          paginatedAttendance.map((attendee, index) => {
+                            // Extract the actual MongoDB _id from the composite id
+                            const mongoId = attendee.id.split('_')[0];
+                            return (
                             <TableRow key={attendee.id} className="hover:bg-gray-50/50 transition-colors">
                               <TableCell className="font-medium text-primary">{attendee.name}</TableCell>
                               <TableCell className="text-gray-500">{attendee.phone}</TableCell>
@@ -600,7 +604,7 @@ export default function Dashboard() {
                               </TableCell>
                               <TableCell className="text-center">
                                 <button
-                                  onClick={() => handleDeleteAttendee(attendee.id, attendee.name)}
+                                  onClick={() => handleDeleteAttendee(mongoId, attendee.name)}
                                   className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
                                   title="Delete attendee"
                                 >
@@ -608,7 +612,8 @@ export default function Dashboard() {
                                 </button>
                               </TableCell>
                             </TableRow>
-                          ))
+                            );
+                          })
                         ) : (
                           <TableRow>
                             <TableCell colSpan={6} className="text-center py-8 text-gray-500">
