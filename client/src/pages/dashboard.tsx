@@ -206,6 +206,27 @@ export default function Dashboard() {
 
   // Table data for selected day
   const currentAttendance = flattened.filter((r) => r.date === selectedDate);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const itemsPerPage = 20;
+  
+  // Filter by search term
+  const filteredAttendance = currentAttendance.filter(r =>
+    r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.phone.includes(searchTerm)
+  );
+  
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAttendance.length / itemsPerPage);
+  const startIdx = (currentPage - 1) * itemsPerPage;
+  const paginatedAttendance = filteredAttendance.slice(startIdx, startIdx + itemsPerPage);
+  
+  // Reset to page 1 when date or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate, searchTerm]);
 
   const exportCsv = async () => {
     const token = localStorage.getItem("vco_token");
@@ -455,7 +476,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input placeholder="Search by name or phone" className="pl-10 rounded-lg border-gray-200" />
+                  <Input placeholder="Search by name or phone" className="pl-10 rounded-lg border-gray-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
               </div>
               
@@ -495,7 +516,7 @@ export default function Dashboard() {
               >
                 <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                   <Users className="w-4 h-4 text-primary" />
-                  Attendance List for {selectedDate}
+                  Attendance List for {selectedDate} ({filteredAttendance.length} total)
                 </h3>
                 <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
                   <div className="overflow-x-auto">
@@ -510,8 +531,8 @@ export default function Dashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {currentAttendance.length > 0 ? (
-                          currentAttendance.map((attendee, index) => (
+                        {paginatedAttendance.length > 0 ? (
+                          paginatedAttendance.map((attendee, index) => (
                             <TableRow key={attendee.id} className="hover:bg-gray-50/50 transition-colors">
                               <TableCell className="font-medium text-primary">{attendee.name}</TableCell>
                               <TableCell className="text-gray-500">{attendee.phone}</TableCell>
@@ -529,13 +550,63 @@ export default function Dashboard() {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                              No attendance records found for this date.
+                              {searchTerm ? `No results found for "${searchTerm}"` : "No attendance records found for this date."}
                             </TableCell>
                           </TableRow>
                         )}
                       </TableBody>
                     </Table>
                   </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+                      <div className="text-sm text-gray-500">
+                        Showing {startIdx + 1} to {Math.min(startIdx + itemsPerPage, filteredAttendance.length)} of {filteredAttendance.length} results
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(pageNum)}
+                                className="w-9 h-9"
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </Card>
               </motion.div>
 

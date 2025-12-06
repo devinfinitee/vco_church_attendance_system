@@ -6,8 +6,6 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const Router = require("./controller/routes.js");
-const Admin = require("./model/Admin");
-const bcrypt = require("bcryptjs");
 const cookieParser = require("cookie-parser");
 
 // Initialize express app
@@ -24,7 +22,8 @@ app.use(
     origin: [
       "https://vcoattendance.vercel.app",
       "https://vcoattendance.onrender.com",
-    ], // Allow both Vite ports and production
+      "http://localhost:5173",
+    ], // Allow production and local development
     credentials: true, // Allow cookies and authentication headers,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
@@ -44,28 +43,7 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("✅ Connected to MongoDB successfully");
-    // Seed default admin if env variables are provided and no admin exists yet
-    (async () => {
-      try {
-        const count = await Admin.countDocuments();
-        if (count === 0) {
-          const emailEnv = process.env.ADMIN_EMAIL;
-          const passwordEnv = process.env.ADMIN_PASSWORD;
-          if (!emailEnv || !passwordEnv) {
-            console.warn(
-              "⚠️ No admin seeded. Set ADMIN_EMAIL and ADMIN_PASSWORD in .env to create an initial admin."
-            );
-          } else {
-            const email = emailEnv.toLowerCase();
-            const hash = await bcrypt.hash(passwordEnv, 10);
-            await Admin.create({ email, passwordHash: hash, name: "Admin" });
-            console.log(`👤 Seeded default admin: ${email}`);
-          }
-        }
-      } catch (e) {
-        console.warn("⚠️ Admin seed skipped:", e.message);
-      }
-    })();
+    console.log("👤 Using hardcoded admin credentials from .env");
   })
   .catch((error) => {
     console.error("❌ MongoDB connection error:", error.message);

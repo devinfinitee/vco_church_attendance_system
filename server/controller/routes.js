@@ -5,9 +5,11 @@ let Router = express.Router();
 // Import authentication middleware for protecting routes
 const authMiddleware = require("../middleware/authMiddleware");
 const Attendee = require("../model/Attendee");
-const Admin = require("../model/Admin");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+// Hardcoded admin credentials
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@church.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "vco123";
 
 // POST /submit - Submit attendance record (create or update existing)
 Router.post("/submit", async (req, res) => {
@@ -110,43 +112,16 @@ Router.post("/logout", authMiddleware, async (req, res) => {
   return res.json({ success: true, message: "Logged out" });
 });
 
-// POST /admin/change-password - Change admin password
+// POST /admin/change-password - Disabled (using hardcoded credentials)
 Router.post("/admin/change-password", authMiddleware, async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "currentPassword and newPassword are required",
-        });
-    }
-
-    const admin = await Admin.findById(req.user.id);
-    if (!admin)
-      return res
-        .status(404)
-        .json({ success: false, message: "Admin not found" });
-
-    const ok = await bcrypt.compare(currentPassword, admin.passwordHash);
-    if (!ok)
-      return res
-        .status(401)
-        .json({ success: false, message: "Current password is incorrect" });
-
-    admin.passwordHash = await bcrypt.hash(newPassword, 10);
-    await admin.save();
-    return res.json({ success: true, message: "Password updated" });
-  } catch (error) {
-    console.error("Change password error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to change password" });
-  }
+  return res.status(400).json({
+    success: false,
+    message:
+      "Password changes are disabled. Update ADMIN_PASSWORD in .env and restart.",
+  });
 });
 
-// POST /login - Admin authentication
+// POST /login - Admin authentication (hardcoded credentials)
 Router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -156,32 +131,26 @@ Router.post("/login", async (req, res) => {
         .json({ success: false, message: "Email and password are required" });
     }
 
-    const admin = await Admin.findOne({ email: email.toLowerCase() });
-    if (!admin) {
+    // Check against hardcoded credentials
+    const emailMatch = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const passwordMatch = password === ADMIN_PASSWORD;
+
+    if (!emailMatch || !passwordMatch) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
     }
 
-    const ok = await bcrypt.compare(password, admin.passwordHash);
-    if (!ok) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
-    }
-
-    admin.lastLoginAt = new Date();
-    await admin.save();
-
+    // Generate JWT token
     const token = jwt.sign(
-      { id: admin._id, role: admin.role, email: admin.email },
+      { role: "admin", email: ADMIN_EMAIL },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
     return res.json({
       success: true,
       token,
-      user: { email: admin.email, name: admin.name, role: admin.role },
+      user: { email: ADMIN_EMAIL, name: "Admin", role: "admin" },
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -240,12 +209,10 @@ Router.get("/admin/export-csv", authMiddleware, async (req, res) => {
   try {
     const dateParam = req.query.date;
     if (!dateParam) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Date parameter required (YYYY-MM-DD)",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Date parameter required (YYYY-MM-DD)",
+      });
     }
 
     const targetDate = new Date(dateParam);
