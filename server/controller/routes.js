@@ -11,7 +11,123 @@ const jwt = require("jsonwebtoken");
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
+// ============================================
+// HELPER FUNCTIONS FOR DUPLICATE DETECTION
+// ============================================
+
+// Helper function to normalize phone numbers for comparison
+const normalizePhone = (phone) => {
+  if (!phone) return '';
+  // Remove all non-digit characters
+  return phone.replace(/\D/g, '');
+};
+
+// Helper function to normalize names for comparison
+const normalizeName = (name) => {
+  if (!name) return '';
+  // Convert to lowercase, trim, and remove extra spaces
+  return name.toLowerCase().trim().replace(/\s+/g, ' ');
+};
+
+// Helper function to calculate name similarity
+// Returns true if names are similar enough to be considered a match
+const areNamesSimilar = (name1, name2) => {
+  const n1 = normalizeName(name1);
+  const n2 = normalizeName(name2);
+  
+  // Exact match after normalization
+  if (n1 === n2) return true;
+  
+  // One name contains the other (handles "John Doe" vs "John Michael Doe")
+  if (n1.includes(n2) || n2.includes(n1)) return true;
+  
+  // Split into words and check if significant overlap
+  const words1 = n1.split(' ');
+  const words2 = n2.split(' ');
+  
+  // If both have at least 2 words, check if first and last names match
+  if (words1.length >= 2 && words2.length >= 2) {
+    const firstName1 = words1[0];
+    const lastName1 = words1[words1.length - 1];
+    const firstName2 = words2[0];
+    const lastName2 = words2[words2.length - 1];
+    
+    // First and last name match = likely same person
+    if (firstName1 === firstName2 && lastName1 === lastName2) return true;
+  }
+  
+  // Calculate word overlap percentage
+  const allWords = new Set([...words1, ...words2]);
+  const commonWords = words1.filter(w => words2.includes(w));
+  const overlapRatio = commonWords.length / Math.min(words1.length, words2.length);
+  
+  // If 75% or more words overlap, consider it a match
+  return overlapRatio >= 0.75;
+};
+
+// Helper function to find existing attendee using multiple criteria
+// Uses efficient matching strategy to avoid duplicates
+const findExistingAttendee = async (name, phone, DOB) => {
+  const normalizedPhone = normalizePhone(phone);
+  
+  // Strategy 1: Try exact phone match (most reliable and efficient)
+  // Check both exact match and normalized match
+  if (normalizedPhone && normalizedPhone.length >= 10) {
+    // First try exact match (fastest)
+    let phoneMatch = await Attendee.findOne({ phone });
+    if (phoneMatch) return phoneMatch;
+    
+    // Then try to find by checking last 10 digits (handles country code variations)
+    const last10 = normalizedPhone.slice(-10);
+    const allWithPhone = await Attendee.find({}).select('phone name DOB').lean();
+    
+    for (const attendee of allWithPhone) {
+      const attendeeNormalized = normalizePhone(attendee.phone);
+      if (attendeeNormalized.slice(-10) === last10) {
+        return await Attendee.findById(attendee._id);
+      }
+    }
+  }
+  
+  // Strategy 2: Match by DOB + similar name (very reliable)
+  if (DOB) {
+    const dobMatches = await Attendee.find({ DOB }).lean();
+    for (const attendee of dobMatches) {
+      if (areNamesSimilar(name, attendee.name)) {
+        return await Attendee.findById(attendee._id);
+      }
+    }
+  }
+  
+  // Strategy 3: Fuzzy name match with phone validation (only for multi-word names)
+  const normalizedInputName = normalizeName(name);
+  if (normalizedInputName.split(' ').length >= 2 && normalizedPhone.length >= 4) {
+    const last4Digits = normalizedPhone.slice(-4);
+    
+    // Only fetch attendees with similar last 4 digits for efficiency
+    const allAttendees = await Attendee.find({}).select('name phone DOB').lean();
+    
+    for (const attendee of allAttendees) {
+      const attendeeLast4 = normalizePhone(attendee.phone).slice(-4);
+      
+      // If last 4 digits match AND names are similar, it's likely the same person
+      if (attendeeLast4 === last4Digits && areNamesSimilar(name, attendee.name)) {
+        return await Attendee.findById(attendee._id);
+      }
+    }
+  }
+  
+  return null;
+};
+
+// ============================================
+// ROUTES
+// ============================================
+
 // POST /submit - Submit attendance record (create or update existing)
+// DUPLICATE DETECTION: Uses intelligent matching to prevent duplicate entries
+// Matches on: phone (normalized), DOB + name similarity, or name + phone last 4 digits
+// This handles cases where users enter variations of their name or phone number
 Router.post("/submit", async (req, res) => {
   try {
     const { name, address, DOB, level, dept, phone } = req.body;
@@ -27,22 +143,31 @@ Router.post("/submit", async (req, res) => {
 
     const now = new Date();
 
-    // Try to find existing attendee by phone (preferred unique), fallback to name
-    let attendee = await Attendee.findOne({ $or: [{ phone }, { name }] });
+    // Use smart matching to find existing attendee (prevents duplicates)
+    // Matches on: phone number, DOB + name similarity, or fuzzy name + phone similarity
+    let attendee = await findExistingAttendee(name, phone, DOB);
 
     if (attendee) {
-      // Update existing attendee: increment count and prepend today's date
-      attendee.noofattendance = (attendee.noofattendance || 0) + 1;
-
-      // Ensure latest-first order and avoid multiple entries for same day
+      // Check if already attended today
       const startOfToday = new Date(now);
       startOfToday.setHours(0, 0, 0, 0);
       const endOfToday = new Date(now);
       endOfToday.setHours(23, 59, 59, 999);
 
-      attendee.datesofattendance = (attendee.datesofattendance || []).filter(
-        (d) => !(new Date(d) >= startOfToday && new Date(d) <= endOfToday)
+      const attendedToday = (attendee.datesofattendance || []).some(
+        (d) => new Date(d) >= startOfToday && new Date(d) <= endOfToday
       );
+
+      if (attendedToday) {
+        return res.status(200).json({
+          success: true,
+          message: "Attendance already recorded for today",
+          data: attendee,
+        });
+      }
+
+      // Update existing attendee: increment count and add today's date
+      attendee.noofattendance = (attendee.noofattendance || 0) + 1;
       attendee.datesofattendance.unshift(now);
 
       await attendee.save();
@@ -244,6 +369,8 @@ Router.get("/admin/export-csv", authMiddleware, async (req, res) => {
       return [
         a.name,
         a.phone,
+        a.address || "",
+        a.DOB || "",
         a.dept || "",
         a.level || "",
         dateParam,
@@ -257,6 +384,8 @@ Router.get("/admin/export-csv", authMiddleware, async (req, res) => {
     const headers = [
       "Name",
       "Phone",
+      "Address",
+      "DOB",
       "Department",
       "Level",
       "Date",

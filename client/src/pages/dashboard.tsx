@@ -115,6 +115,8 @@ export default function Dashboard() {
       name: a.name,
       phone: a.phone,
       department: a.dept,
+      address: a.address,
+      dob: a.DOB,
       time: new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: toISODate(d),
       status: a.noofattendance === 1 ? 'New' : 'Returning',
@@ -240,7 +242,9 @@ export default function Dashboard() {
   // Filter by search term
   const filteredAttendance = currentAttendance.filter(r =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.phone.includes(searchTerm)
+    r.phone.includes(searchTerm) ||
+    (r.address || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (r.dob || '').includes(searchTerm)
   );
   
   // Pagination calculations
@@ -313,32 +317,40 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 font-sans">
       {/* Top Navigation Bar */}
       <motion.nav 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="bg-white border-b border-gray-200 h-[70px] sticky top-0 z-50 px-4 sm:px-8 flex items-center justify-between shadow-sm"
+        className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 h-[72px] sticky top-0 z-50 px-4 sm:px-8 flex items-center justify-between shadow-sm"
       >
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="Logo" className="h-10 w-auto" />
-          <span className="font-bold text-lg text-primary hidden sm:block">VCO Admin Dashboard</span>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 rounded-full blur-lg"></div>
+            <img src={logo} alt="Logo" className="h-12 w-auto relative z-10 drop-shadow-md" />
+          </div>
+          <div>
+            <span className="font-bold text-xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent hidden sm:block">VCO Admin</span>
+            <span className="text-xs text-gray-500 hidden sm:block">Management Dashboard</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-100 py-2 px-3 rounded-full">
-            <User className="w-4 h-4 text-primary" />
+          <div className="hidden sm:flex items-center gap-3 text-sm font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-800 py-2.5 px-4 rounded-full border border-blue-100">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </div>
             <span>Admin User</span>
           </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleLogout}
-            className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+            className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 rounded-full px-4 font-semibold transition-all hover:scale-105"
           >
             <LogOut className="w-4 h-4" />
-            Logout
+            <span className="hidden sm:inline">Logout</span>
           </Button>
         </div>
       </motion.nav>
@@ -353,47 +365,84 @@ export default function Dashboard() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           <motion.div variants={item}>
-            <Card className="border-none shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300">
-              <CardContent className="p-6">
-                <div className="text-sm font-medium text-gray-500 mb-1">Total Attendance Today</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-primary">{computedAttendanceStats.totalToday}</span>
-                </div>
-                <div className="text-xs text-gray-400 mt-2">For {computedAttendanceStats.date}</div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={item}>
-            <Card className="border-none shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300">
-              <CardContent className="p-6">
-                <div className="text-sm font-medium text-gray-500 mb-1">New Visitors Today</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-accent-foreground">{computedAttendanceStats.newVisitors}</span>
-                  <Badge className="bg-accent text-accent-foreground hover:bg-accent/80">New</Badge>
+            <Card className="border-none shadow-lg shadow-blue-900/5 hover:shadow-xl hover:shadow-blue-900/10 transition-all hover:-translate-y-1 duration-300 bg-gradient-to-br from-white to-blue-50/30 rounded-2xl overflow-hidden group">
+              <CardContent className="p-6 relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-transparent rounded-bl-full"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Today</div>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/30">
+                      <Users className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold bg-gradient-to-br from-primary to-blue-700 bg-clip-text text-transparent">{computedAttendanceStats.totalToday}</span>
+                    <span className="text-sm text-gray-500 font-medium">attendees</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-3 font-medium">{computedAttendanceStats.date}</div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
           <motion.div variants={item}>
-            <Card className="border-none shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300">
-              <CardContent className="p-6">
-                <div className="text-sm font-medium text-gray-500 mb-1">Returning Members</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-gray-800">{computedAttendanceStats.returning}</span>
+            <Card className="border-none shadow-lg shadow-green-900/5 hover:shadow-xl hover:shadow-green-900/10 transition-all hover:-translate-y-1 duration-300 bg-gradient-to-br from-white to-green-50/30 rounded-2xl overflow-hidden group">
+              <CardContent className="p-6 relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-transparent rounded-bl-full"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">New Visitors</div>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+                      <UserPlus className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold bg-gradient-to-br from-green-600 to-emerald-700 bg-clip-text text-transparent">{computedAttendanceStats.newVisitors}</span>
+                    <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none font-semibold">First Time</Badge>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-3 font-medium">Today's newcomers</div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
           <motion.div variants={item}>
-            <Card className="border-none shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300">
-              <CardContent className="p-6">
-                <div className="text-sm font-medium text-gray-500 mb-1">Absent Members</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-red-500">{computedAttendanceStats.absent}</span>
-                  <span className="text-xs text-gray-400">from last week</span>
+            <Card className="border-none shadow-lg shadow-indigo-900/5 hover:shadow-xl hover:shadow-indigo-900/10 transition-all hover:-translate-y-1 duration-300 bg-gradient-to-br from-white to-indigo-50/30 rounded-2xl overflow-hidden group">
+              <CardContent className="p-6 relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-transparent rounded-bl-full"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Returning</div>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                      <Check className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold bg-gradient-to-br from-indigo-600 to-purple-700 bg-clip-text text-transparent">{computedAttendanceStats.returning}</span>
+                    <span className="text-sm text-gray-500 font-medium">members</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-3 font-medium">Regular attendees</div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={item}>
+            <Card className="border-none shadow-lg shadow-red-900/5 hover:shadow-xl hover:shadow-red-900/10 transition-all hover:-translate-y-1 duration-300 bg-gradient-to-br from-white to-red-50/30 rounded-2xl overflow-hidden group">
+              <CardContent className="p-6 relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-400/10 to-transparent rounded-bl-full"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Absent</div>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30">
+                      <UserMinus className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold bg-gradient-to-br from-red-600 to-rose-700 bg-clip-text text-transparent">{computedAttendanceStats.absent}</span>
+                    <span className="text-xs text-gray-500 font-medium">vs last week</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-3 font-medium">Need follow-up</div>
                 </div>
               </CardContent>
             </Card>
@@ -401,9 +450,9 @@ export default function Dashboard() {
         </motion.div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full max-w-[400px] grid-cols-2 mb-8">
-            <TabsTrigger value="overview">Overview & Trends</TabsTrigger>
-            <TabsTrigger value="management">Attendance Management</TabsTrigger>
+          <TabsList className="grid w-full max-w-[480px] grid-cols-2 mb-8 bg-gradient-to-r from-gray-100 to-blue-50/50 p-1.5 h-12 rounded-2xl border border-gray-200/50">
+            <TabsTrigger value="overview" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-primary font-semibold transition-all">Overview & Trends</TabsTrigger>
+            <TabsTrigger value="management" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-primary font-semibold transition-all">Attendance Management</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-8">
@@ -413,11 +462,17 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-semibold text-gray-800">Weekly Attendance Trend (Last 6 Sundays)</CardTitle>
+              <Card className="border-none shadow-xl shadow-blue-900/5 rounded-3xl overflow-hidden bg-gradient-to-br from-white to-blue-50/20">
+                <CardHeader className="pb-4 border-b border-gray-100 bg-gradient-to-r from-blue-50/50 to-transparent">
+                  <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20">
+                      <Calendar className="w-5 h-5 text-white" />
+                    </div>
+                    Weekly Attendance Trend
+                    <span className="text-sm font-normal text-gray-500">(Last 6 Sundays)</span>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="h-[300px] w-full">
+                <CardContent className="h-[320px] w-full pt-6">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={computedWeeklyTrend}
@@ -425,32 +480,38 @@ export default function Dashboard() {
                     >
                       <defs>
                         <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#1E3A8A" stopOpacity={0.2}/>
+                          <stop offset="5%" stopColor="#1E3A8A" stopOpacity={0.3}/>
                           <stop offset="95%" stopColor="#1E3A8A" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                       <XAxis 
                         dataKey="name" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: '#9CA3AF', fontSize: 12 }} 
+                        tick={{ fill: '#6B7280', fontSize: 13, fontWeight: 500 }} 
                         dy={10}
                       />
                       <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: '#9CA3AF', fontSize: 12 }} 
+                        tick={{ fill: '#6B7280', fontSize: 13, fontWeight: 500 }} 
                       />
                       <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        cursor={{ stroke: '#1E3A8A', strokeWidth: 1, strokeDasharray: '5 5' }}
+                        contentStyle={{ 
+                          borderRadius: '16px', 
+                          border: 'none', 
+                          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                          padding: '12px 16px',
+                          backgroundColor: 'white'
+                        }}
+                        cursor={{ stroke: '#1E3A8A', strokeWidth: 2, strokeDasharray: '5 5' }}
                       />
                       <Area 
                         type="monotone" 
                         dataKey="attendance" 
                         stroke="#1E3A8A" 
-                        strokeWidth={3}
+                        strokeWidth={4}
                         fillOpacity={1} 
                         fill="url(#colorAttendance)" 
                       />
@@ -466,52 +527,65 @@ export default function Dashboard() {
               initial="hidden"
               animate="show"
             >
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Member Attendance Insights</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-white" />
+                </div>
+                Member Attendance Insights
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                  <motion.div variants={item}>
-                   <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
+                   <Card className="border-l-4 border-l-green-500 shadow-lg shadow-green-900/5 hover:shadow-xl transition-all hover:-translate-y-1 duration-300 rounded-2xl bg-gradient-to-br from-white to-green-50/20">
                      <CardContent className="p-6 flex items-center justify-between">
                        <div>
-                         <div className="text-sm text-gray-500">Consistent Members</div>
-                         <div className="text-3xl font-bold text-gray-800">{computedConsistency.consistent}</div>
+                         <div className="text-sm text-gray-600 font-semibold mb-1">Consistent Members</div>
+                         <div className="text-4xl font-bold bg-gradient-to-br from-green-600 to-emerald-700 bg-clip-text text-transparent">{computedConsistency.consistent}</div>
                        </div>
-                       <Users className="w-10 h-10 text-green-100" />
+                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                         <Users className="w-8 h-8 text-green-600" />
+                       </div>
                      </CardContent>
                    </Card>
                  </motion.div>
                  
                  <motion.div variants={item}>
-                   <Card className="border-l-4 border-l-yellow-500 shadow-sm hover:shadow-md transition-shadow">
+                   <Card className="border-l-4 border-l-yellow-500 shadow-lg shadow-yellow-900/5 hover:shadow-xl transition-all hover:-translate-y-1 duration-300 rounded-2xl bg-gradient-to-br from-white to-yellow-50/20">
                      <CardContent className="p-6 flex items-center justify-between">
                        <div>
-                         <div className="text-sm text-gray-500">Absent for 2 Weeks</div>
-                        <div className="text-3xl font-bold text-gray-800">{computedConsistency.absent2Weeks}</div>
+                         <div className="text-sm text-gray-600 font-semibold mb-1">Absent 2 Weeks</div>
+                        <div className="text-4xl font-bold bg-gradient-to-br from-yellow-600 to-amber-700 bg-clip-text text-transparent">{computedConsistency.absent2Weeks}</div>
                        </div>
-                       <UserMinus className="w-10 h-10 text-yellow-100" />
+                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-100 to-amber-100 flex items-center justify-center">
+                         <UserMinus className="w-8 h-8 text-yellow-600" />
+                       </div>
                      </CardContent>
                    </Card>
                  </motion.div>
 
                 <motion.div variants={item}>
-                  <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow">
+                  <Card className="border-l-4 border-l-orange-500 shadow-lg shadow-orange-900/5 hover:shadow-xl transition-all hover:-translate-y-1 duration-300 rounded-2xl bg-gradient-to-br from-white to-orange-50/20">
                     <CardContent className="p-6 flex items-center justify-between">
                       <div>
-                        <div className="text-sm text-gray-500">Absent 3+ Weeks</div>
-                        <div className="text-3xl font-bold text-gray-800">{computedConsistency.absent3PlusWeeks}</div>
+                        <div className="text-sm text-gray-600 font-semibold mb-1">Absent 3+ Weeks</div>
+                        <div className="text-4xl font-bold bg-gradient-to-br from-orange-600 to-orange-700 bg-clip-text text-transparent">{computedConsistency.absent3PlusWeeks}</div>
                       </div>
-                      <UserMinus className="w-10 h-10 text-orange-100" />
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-100 flex items-center justify-center">
+                        <UserMinus className="w-8 h-8 text-orange-600" />
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
 
                  <motion.div variants={item}>
-                   <Card className="border-l-4 border-l-red-500 shadow-sm bg-red-50/30 hover:shadow-md transition-shadow">
+                   <Card className="border-l-4 border-l-red-500 shadow-lg shadow-red-900/5 hover:shadow-xl transition-all hover:-translate-y-1 duration-300 rounded-2xl bg-gradient-to-br from-white to-red-50/20">
                      <CardContent className="p-6 flex items-center justify-between">
                        <div>
-                         <div className="text-sm text-gray-500">Absent for 4+ Weeks</div>
-                         <div className="text-3xl font-bold text-red-600">{computedConsistency.absent4Weeks}</div>
+                         <div className="text-sm text-gray-600 font-semibold mb-1">Absent 4+ Weeks</div>
+                         <div className="text-4xl font-bold bg-gradient-to-br from-red-600 to-rose-700 bg-clip-text text-transparent">{computedConsistency.absent4Weeks}</div>
                        </div>
-                       <UserMinus className="w-10 h-10 text-red-100" />
+                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-100 to-rose-100 flex items-center justify-center">
+                         <AlertCircle className="w-8 h-8 text-red-600" />
+                       </div>
                      </CardContent>
                    </Card>
                  </motion.div>
@@ -524,20 +598,25 @@ export default function Dashboard() {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl shadow-sm"
+              className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg shadow-blue-900/5 border border-gray-100"
             >
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input placeholder="Search by name or phone" className="pl-10 rounded-lg border-gray-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input 
+                    placeholder="Search by name or phone" 
+                    className="pl-12 h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                  />
                 </div>
               </div>
               
               <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto">
-                 <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                   <Calendar className="w-4 h-4 text-gray-500" />
+                 <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2.5 rounded-xl border-2 border-blue-100 shadow-sm">
+                   <Calendar className="w-5 h-5 text-primary" />
                    <Select value={selectedDate} onValueChange={setSelectedDate}>
-                     <SelectTrigger className="w-[180px] h-8 border-none bg-transparent focus:ring-0 p-0">
+                     <SelectTrigger className="w-[200px] h-9 border-none bg-transparent focus:ring-0 p-0 font-semibold text-gray-700">
                        <SelectValue placeholder="Select Date" />
                      </SelectTrigger>
                      <SelectContent>
@@ -551,7 +630,10 @@ export default function Dashboard() {
                    </Select>
                  </div>
 
-                 <Button variant="outline" className="gap-2 border-accent text-primary hover:bg-accent hover:text-accent-foreground" onClick={exportCsv}
+                 <Button 
+                   variant="outline" 
+                   className="gap-2 bg-gradient-to-r from-primary to-blue-600 text-white border-none hover:from-blue-900 hover:to-blue-800 shadow-lg shadow-primary/20 rounded-xl px-6 h-12 font-semibold transition-all hover:scale-105" 
+                   onClick={exportCsv}
                  >
                    <Download className="w-4 h-4" />
                    Export CSV
@@ -567,21 +649,26 @@ export default function Dashboard() {
                 transition={{ delay: 0.2 }}
                 className="lg:col-span-2 space-y-4"
               >
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
-                  Attendance List for {selectedDate} ({filteredAttendance.length} total)
+                <h3 className="font-bold text-xl text-gray-900 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  Attendance List for {selectedDate}
+                  <Badge className="bg-blue-100 text-primary border-none font-bold px-3">{filteredAttendance.length} total</Badge>
                 </h3>
-                <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
+                <Card className="border-none shadow-xl shadow-blue-900/5 rounded-3xl overflow-hidden bg-white">
                   <div className="overflow-x-auto">
                     <Table>
-                      <TableHeader className="bg-gray-50">
-                        <TableRow>
-                          <TableHead className="w-[200px]">Name</TableHead>
-                          <TableHead>Phone</TableHead>
-                          <TableHead>Role/Dept</TableHead>
-                          <TableHead>Time Logged</TableHead>
-                          <TableHead className="text-right">Status</TableHead>
-                          <TableHead className="text-center">Action</TableHead>
+                      <TableHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <TableRow className="border-b-2 border-blue-100">
+                          <TableHead className="w-[200px] font-bold text-gray-700">Name</TableHead>
+                          <TableHead className="font-bold text-gray-700">Phone</TableHead>
+                          <TableHead className="font-bold text-gray-700">Address</TableHead>
+                          <TableHead className="font-bold text-gray-700">DOB</TableHead>
+                          <TableHead className="font-bold text-gray-700">Department</TableHead>
+                          <TableHead className="font-bold text-gray-700">Time</TableHead>
+                          <TableHead className="text-right font-bold text-gray-700">Status</TableHead>
+                          <TableHead className="text-center font-bold text-gray-700">Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -590,22 +677,24 @@ export default function Dashboard() {
                             // Extract the actual MongoDB _id from the composite id
                             const mongoId = attendee.id.split('_')[0];
                             return (
-                            <TableRow key={attendee.id} className="hover:bg-gray-50/50 transition-colors">
-                              <TableCell className="font-medium text-primary">{attendee.name}</TableCell>
-                              <TableCell className="text-gray-500">{attendee.phone}</TableCell>
+                            <TableRow key={attendee.id} className="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
+                              <TableCell className="font-semibold text-gray-900">{attendee.name}</TableCell>
+                              <TableCell className="text-gray-600">{attendee.phone}</TableCell>
+                              <TableCell className="text-gray-600">{attendee.address || 'N/A'}</TableCell>
+                              <TableCell className="text-gray-600">{attendee.dob || 'N/A'}</TableCell>
                               <TableCell className="text-gray-600">{attendee.department}</TableCell>
-                              <TableCell className="text-gray-500 tabular-nums">{attendee.time}</TableCell>
+                              <TableCell className="text-gray-600 tabular-nums font-medium">{attendee.time}</TableCell>
                               <TableCell className="text-right">
                                  {attendee.status === "New" ? (
-                                   <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-none">First Timer</Badge>
+                                   <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 border-none shadow-sm">First Timer</Badge>
                                  ) : (
-                                   <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Returning</Badge>
+                                   <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 font-semibold">Returning</Badge>
                                  )}
                               </TableCell>
                               <TableCell className="text-center">
                                 <button
                                   onClick={() => handleDeleteAttendee(mongoId, attendee.name)}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-100 p-2.5 rounded-xl transition-all hover:scale-110"
                                   title="Delete attendee"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -616,7 +705,7 @@ export default function Dashboard() {
                           })
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={8} className="text-center py-12 text-gray-500">
                               {searchTerm ? `No results found for "${searchTerm}"` : "No attendance records found for this date."}
                             </TableCell>
                           </TableRow>
@@ -625,8 +714,8 @@ export default function Dashboard() {
                     </Table>
                   </div>
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-                      <div className="text-sm text-gray-500">
+                    <div className="flex items-center justify-between px-6 py-5 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50/30">
+                      <div className="text-sm text-gray-600 font-medium">
                         Showing {startIdx + 1} to {Math.min(startIdx + itemsPerPage, filteredAttendance.length)} of {filteredAttendance.length} results
                       </div>
                       <div className="flex items-center gap-2">
@@ -635,6 +724,7 @@ export default function Dashboard() {
                           size="sm"
                           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
+                          className="rounded-xl hover:bg-blue-50 border-gray-300"
                         >
                           Previous
                         </Button>
@@ -656,7 +746,7 @@ export default function Dashboard() {
                                 variant={currentPage === pageNum ? "default" : "outline"}
                                 size="sm"
                                 onClick={() => setCurrentPage(pageNum)}
-                                className="w-9 h-9"
+                                className={`w-10 h-10 rounded-xl ${currentPage === pageNum ? 'bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg shadow-primary/30' : 'hover:bg-blue-50 border-gray-300'}`}
                               >
                                 {pageNum}
                               </Button>
@@ -668,6 +758,7 @@ export default function Dashboard() {
                           size="sm"
                           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
+                          className="rounded-xl hover:bg-blue-50 border-gray-300"
                         >
                           Next
                         </Button>
@@ -684,44 +775,45 @@ export default function Dashboard() {
                 transition={{ delay: 0.3 }}
                 className="space-y-4"
               >
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-500" />
-                  Absentee Analysis (Current)
+                <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  Absentee Analysis
                 </h3>
-                <Card className="border-none shadow-sm rounded-2xl overflow-hidden bg-white">
-                  <CardHeader className="bg-red-50/50 pb-3 border-b border-red-100">
-                    <CardTitle className="text-sm font-medium text-red-800">
+                <Card className="border-none shadow-xl shadow-red-900/5 rounded-3xl overflow-hidden bg-white">
+                  <CardHeader className="bg-gradient-to-r from-red-50 to-rose-50 pb-4 border-b-2 border-red-100">
+                    <CardTitle className="text-base font-bold text-red-900 flex items-center gap-2">
+                      <UserMinus className="w-5 h-5" />
                       Missing Today but Present Previously
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
                       {computedAbsentMembers.map((member) => (
-                        <div key={member.id} className="p-4 hover:bg-gray-50 transition-colors">
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="font-medium text-gray-900">{member.name}</div>
-                            <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
-                              {member.missedSundays} Missed
+                        <div key={member.id} className="p-5 hover:bg-red-50/50 transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="font-bold text-gray-900 text-base">{member.name}</div>
+                            <Badge className="bg-gradient-to-r from-red-500 to-rose-600 text-white border-none shadow-sm font-bold">
+                              {member.missedSundays} Week{member.missedSundays > 1 ? 's' : ''}
                             </Badge>
                           </div>
-                          <div className="text-sm text-gray-500 mb-2">{member.phone}</div>
-                          <div className="flex items-center gap-2 text-xs text-gray-400">
-                            <Clock className="w-3 h-3" />
+                          <div className="text-sm text-gray-600 mb-3 font-medium">{member.phone}</div>
+                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 bg-gray-50 px-3 py-2 rounded-lg">
+                            <Clock className="w-4 h-4" />
                             Last seen: {member.lastSeen}
                           </div>
-                          <div className="mt-3 flex gap-2">
-                            <Button size="sm" variant="outline" className="w-full text-xs h-8">
+                          <div className="flex gap-2">
+                            <Button size="sm" className="flex-1 text-xs h-9 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-md">
                               Call
                             </Button>
-                            <Button size="sm" variant="outline" className="w-full text-xs h-8">
+                            <Button size="sm" variant="outline" className="flex-1 text-xs h-9 rounded-xl border-gray-300 hover:bg-blue-50">
                               History
                             </Button>
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="p-3 bg-gray-50 text-center">
-                      <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:text-primary w-full">
+                    <div className="p-4 bg-gradient-to-r from-gray-50 to-red-50/30 text-center border-t-2 border-gray-100">
+                      <Button variant="ghost" size="sm" className="text-xs text-primary hover:text-blue-700 hover:bg-blue-50 w-full font-semibold rounded-xl">
                         View Full Absentee Report
                       </Button>
                     </div>
@@ -736,44 +828,45 @@ export default function Dashboard() {
                 transition={{ delay: 0.4 }}
                 className="space-y-4"
               >
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-orange-500" />
+                <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-orange-500" />
                   Absent for 3+ Weeks
                 </h3>
-                <Card className="border-none shadow-sm rounded-2xl overflow-hidden bg-white">
-                  <CardHeader className="bg-orange-50/50 pb-3 border-b border-orange-100">
-                    <CardTitle className="text-sm font-medium text-orange-800">
+                <Card className="border-none shadow-xl shadow-orange-900/5 rounded-3xl overflow-hidden bg-white">
+                  <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 pb-4 border-b-2 border-orange-100">
+                    <CardTitle className="text-base font-bold text-orange-900 flex items-center gap-2">
+                      <UserMinus className="w-5 h-5" />
                       Members missing for over 21 days
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
                       {computedAbsent3PlusMembers.length ? (
                         computedAbsent3PlusMembers.map((member) => (
-                          <div key={member.id} className="p-4 hover:bg-gray-50 transition-colors">
-                            <div className="flex justify-between items-start mb-1">
-                              <div className="font-medium text-gray-900">{member.name}</div>
-                              <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-xs">
-                                {member.missedSundays} Missed
+                          <div key={member.id} className="p-5 hover:bg-orange-50/50 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="font-bold text-gray-900 text-base">{member.name}</div>
+                              <Badge className="bg-gradient-to-r from-orange-500 to-amber-600 text-white border-none shadow-sm font-bold">
+                                {member.missedSundays} Week{member.missedSundays > 1 ? 's' : ''}
                               </Badge>
                             </div>
-                            <div className="text-sm text-gray-500 mb-2">{member.phone}</div>
-                            <div className="flex items-center gap-2 text-xs text-gray-400">
-                              <Clock className="w-3 h-3" />
+                            <div className="text-sm text-gray-600 mb-3 font-medium">{member.phone}</div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 bg-gray-50 px-3 py-2 rounded-lg">
+                              <Clock className="w-4 h-4" />
                               Last seen: {member.lastSeen}
                             </div>
-                            <div className="mt-3 flex gap-2">
-                              <Button size="sm" variant="outline" className="w-full text-xs h-8">
+                            <div className="flex gap-2">
+                              <Button size="sm" className="flex-1 text-xs h-9 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 rounded-xl shadow-md">
                                 Call
                               </Button>
-                              <Button size="sm" variant="outline" className="w-full text-xs h-8">
+                              <Button size="sm" variant="outline" className="flex-1 text-xs h-9 rounded-xl border-gray-300 hover:bg-orange-50">
                                 History
                               </Button>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="p-4 text-center text-sm text-gray-500">No members absent for 3+ weeks.</div>
+                        <div className="p-8 text-center text-sm text-gray-500">No members absent for 3+ weeks.</div>
                       )}
                     </div>
                   </CardContent>

@@ -23,6 +23,7 @@ app.use(
       "https://vcoattendance.vercel.app",
       "https://vcoattendance.onrender.com",
       "http://localhost:5173",
+      "http://localhost:5001"
     ], // Allow production and local development
     credentials: true, // Allow cookies and authentication headers,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
