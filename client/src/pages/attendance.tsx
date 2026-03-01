@@ -81,6 +81,7 @@ export default function Attendance() {
       };
 
       // Submit to backend API
+      
       const response = await fetch("https://vcoattendance.onrender.com/api/submit", {
         method: "POST",
         headers: {
