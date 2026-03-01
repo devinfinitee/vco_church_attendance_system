@@ -130,14 +130,14 @@ const findExistingAttendee = async (name, phone, DOB) => {
 // This handles cases where users enter variations of their name or phone number
 Router.post("/submit", async (req, res) => {
   try {
-    const { name, address, DOB, level, dept, phone } = req.body;
+    const { name, address, DOB, level, dept, phone, isFirstTimer } = req.body;
 
     // Validate required fields
-    if (!name || !address || !DOB || !level || !dept || !phone) {
+    if (!name || !address || !DOB || !level || !dept || !phone || typeof isFirstTimer !== 'boolean') {
       return res.status(400).json({
         success: false,
         message:
-          "All fields are required: name, address, DOB, level, dept, phone",
+          "All fields are required: name, address, DOB, level, dept, phone, isFirstTimer",
       });
     }
 
@@ -187,6 +187,7 @@ Router.post("/submit", async (req, res) => {
       level,
       dept,
       phone,
+      isFirstTimer,
       dateregistered: now,
       noofattendance: 1,
       datesofattendance: [now],
@@ -364,7 +365,7 @@ Router.get("/admin/export-csv", authMiddleware, async (req, res) => {
       const time = attendanceOnDate
         ? new Date(attendanceOnDate).toLocaleTimeString()
         : "N/A";
-      const status = (a.noofattendance || 0) === 1 ? "New" : "Returning";
+      const status = a.isFirstTimer ? "First Timer" : "Returning Member";
 
       return [
         a.name,

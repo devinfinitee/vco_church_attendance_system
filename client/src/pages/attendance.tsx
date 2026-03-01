@@ -30,7 +30,9 @@ import logo from "@assets/image_1764629926090.png";
 const formSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
   phone: z.string().min(10, "Valid phone number is required"),
-  isFirstTime: z.enum(["yes", "no"]),
+  isFirstTime: z.enum(["yes", "no"], {
+    required_error: "Please select if you are a first-time visitor",
+  }),
   dob: z.string().min(1, "Date of birth is required"),
   address: z.string().min(5, "Address is required"),
   department: z.string().optional(),
@@ -50,7 +52,7 @@ export default function Attendance() {
     defaultValues: {
       fullName: "",
       phone: "",
-      isFirstTime: "no",
+      isFirstTime: undefined,
       dob: "",
       address: "",
       department: "",
@@ -78,6 +80,7 @@ export default function Attendance() {
         level: values.level || "N/A",
         dept: values.department || "N/A",
         phone: values.phone,
+        isFirstTimer: values.isFirstTime === "yes",
       };
 
       // Submit to backend API
@@ -369,7 +372,7 @@ export default function Attendance() {
                           <FormControl>
                             <RadioGroup
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                               className="flex gap-4"
                             >
                               <FormItem className="flex-1">

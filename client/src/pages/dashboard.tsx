@@ -119,7 +119,7 @@ export default function Dashboard() {
       dob: a.DOB,
       time: new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: toISODate(d),
-      status: a.noofattendance === 1 ? 'New' : 'Returning',
+      status: a.isFirstTimer ? 'New' : 'Returning',
     }))
   );
 
@@ -131,8 +131,8 @@ export default function Dashboard() {
   );
   const computedAttendanceStats = {
     totalToday: attendeesToday.length,
-    newVisitors: attendeesToday.filter((a: any) => (a.noofattendance || 0) === 1).length,
-    returning: attendeesToday.filter((a: any) => (a.noofattendance || 0) > 1).length,
+    newVisitors: attendeesToday.filter((a: any) => a.isFirstTimer === true).length,
+    returning: attendeesToday.filter((a: any) => a.isFirstTimer === false).length,
     absent: 0, // computed below
     date: new Date().toLocaleDateString(),
   };

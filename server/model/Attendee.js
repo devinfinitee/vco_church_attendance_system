@@ -8,6 +8,7 @@ let attendeeSchema = new mongoose.Schema(
     level: { type: String, required: true },
     dept: { type: String, required: true },
     phone: { type: String, required: true, index: true }, // Indexed for faster duplicate detection
+    isFirstTimer: { type: Boolean, required: true, default: false }, // Explicitly tracks if person registered as first-timer
     dateregistered: { type: Date, required: true, default: Date.now },
     noofattendance: { type: Number, required: true, default: 1 },
     datesofattendance: {
